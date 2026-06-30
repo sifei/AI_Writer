@@ -230,10 +230,17 @@ def _apply_page_layout(root: ElementTree.Element, rules: Dict) -> None:
     body = root.find("w:body", WORD_NS)
     if body is None:
         return
-    sect_pr = body.find("w:sectPr", WORD_NS)
-    if sect_pr is None:
-        sect_pr = ElementTree.SubElement(body, _qn("w:sectPr"))
+    section_properties = root.findall(".//w:sectPr", WORD_NS)
+    body_sect_pr = body.find("w:sectPr", WORD_NS)
+    if body_sect_pr is None:
+        body_sect_pr = ElementTree.SubElement(body, _qn("w:sectPr"))
+        section_properties.append(body_sect_pr)
 
+    for sect_pr in section_properties:
+        _apply_section_layout(sect_pr, rules)
+
+
+def _apply_section_layout(sect_pr: ElementTree.Element, rules: Dict) -> None:
     pg_sz = _ensure_child(sect_pr, "w:pgSz")
     pg_sz.set(_qn("w:w"), "12240")
     pg_sz.set(_qn("w:h"), "15840")

@@ -129,6 +129,22 @@ Discussion: {long_discussion}
         self.assertEqual(result["layoutMode"], "IEEE two-column technical layout")
         self.assertIn('w:num="2"', document_xml)
 
+    def test_ieee_access_applies_two_columns_to_all_sections(self):
+        encoded = base64.b64encode(_docx_with_multiple_sections()).decode("ascii")
+
+        result = convert_docx_to_journal_format(
+            {
+                "journal": "IEEE Access",
+                "fileName": "multi-section-ieee.docx",
+                "docxBase64": encoded,
+            }
+        )
+        document_xml = _read_document_xml(base64.b64decode(result["convertedDocxBase64"]))
+
+        self.assertEqual(result["layoutMode"], "IEEE two-column technical layout")
+        self.assertGreaterEqual(document_xml.count('w:num="2"'), 2)
+        self.assertNotIn('w:num="1"', document_xml)
+
     def test_plos_one_remains_single_column(self):
         encoded = base64.b64encode(_build_docx(TEXT)).decode("ascii")
 
@@ -200,6 +216,27 @@ def _docx_with_markup_compatibility() -> bytes:
         'xmlns:w14="http://schemas.microsoft.com/office/word/2010/wordml" mc:Ignorable="w14" ',
         1,
     )
+    entries["word/document.xml"] = document_xml.encode("utf-8")
+    return _zip_entries(entries)
+
+
+def _docx_with_multiple_sections() -> bytes:
+    with zipfile.ZipFile(io.BytesIO(_build_docx(TEXT))) as source:
+        entries = {name: source.read(name) for name in source.namelist()}
+
+    document_xml = entries["word/document.xml"].decode("utf-8")
+    section_break = """
+<w:p>
+  <w:pPr>
+    <w:sectPr>
+      <w:pgSz w:w="12240" w:h="15840"/>
+      <w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440"/>
+      <w:cols w:num="1"/>
+    </w:sectPr>
+  </w:pPr>
+</w:p>
+"""
+    document_xml = document_xml.replace("<w:p><w:r><w:t>Methods", f"{section_break}<w:p><w:r><w:t>Methods", 1)
     entries["word/document.xml"] = document_xml.encode("utf-8")
     return _zip_entries(entries)
 
