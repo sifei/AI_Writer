@@ -44,6 +44,10 @@ export type ConversionResult = {
   appliedRules: string[];
   warnings: string[];
   extractedWordCount: number;
+  tableCount: number;
+  figureCount: number;
+  captionWarnings: string[];
+  layoutMode: string;
 };
 
 export type ExtractedUpload = {

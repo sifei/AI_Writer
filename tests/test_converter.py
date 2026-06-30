@@ -1,6 +1,11 @@
 import base64
+import io
+import sys
 import unittest
+import zipfile
+from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from worker.biomed_assistant.converter import _build_docx, _extract_docx_text, convert_docx_to_journal_format
 
 
@@ -72,6 +77,114 @@ Discussion: {long_discussion}
         self.assertIn("methods detail", converted_text)
         self.assertIn("results finding", converted_text)
         self.assertIn("discussion implication", converted_text)
+
+    def test_convert_docx_preserves_tables_and_reports_count(self):
+        encoded = base64.b64encode(_docx_with_table()).decode("ascii")
+
+        result = convert_docx_to_journal_format(
+            {
+                "journal": "JAMIA",
+                "fileName": "table-manuscript.docx",
+                "docxBase64": encoded,
+            }
+        )
+        converted = base64.b64decode(result["convertedDocxBase64"])
+        converted_text = _extract_docx_text(converted)
+
+        self.assertEqual(result["tableCount"], 1)
+        self.assertIn("Cohort size", converted_text)
+        self.assertIn("184", converted_text)
+        self.assertTrue(any("Some tables may be missing captions" in warning for warning in result["captionWarnings"]))
+        self.assertIn("<w:tbl", _read_document_xml(converted))
+
+    def test_convert_docx_preserves_media_and_reports_figure_count(self):
+        encoded = base64.b64encode(_docx_with_media()).decode("ascii")
+
+        result = convert_docx_to_journal_format(
+            {
+                "journal": "npj Digital Medicine",
+                "fileName": "figure-manuscript.docx",
+                "docxBase64": encoded,
+            }
+        )
+        converted = base64.b64decode(result["convertedDocxBase64"])
+
+        self.assertEqual(result["figureCount"], 1)
+        self.assertTrue(any("Some figures may be missing captions" in warning for warning in result["captionWarnings"]))
+        with zipfile.ZipFile(io.BytesIO(converted)) as archive:
+            self.assertIn("word/media/image1.png", archive.namelist())
+
+    def test_ieee_access_applies_two_column_layout(self):
+        encoded = base64.b64encode(_build_docx(TEXT)).decode("ascii")
+
+        result = convert_docx_to_journal_format(
+            {
+                "journal": "IEEE Access",
+                "fileName": "ieee.docx",
+                "docxBase64": encoded,
+            }
+        )
+        document_xml = _read_document_xml(base64.b64decode(result["convertedDocxBase64"]))
+
+        self.assertEqual(result["layoutMode"], "IEEE two-column technical layout")
+        self.assertIn('w:num="2"', document_xml)
+
+    def test_plos_one_remains_single_column(self):
+        encoded = base64.b64encode(_build_docx(TEXT)).decode("ascii")
+
+        result = convert_docx_to_journal_format(
+            {
+                "journal": "PLOS ONE",
+                "fileName": "plos.docx",
+                "docxBase64": encoded,
+            }
+        )
+        document_xml = _read_document_xml(base64.b64decode(result["convertedDocxBase64"]))
+
+        self.assertEqual(result["layoutMode"], "single-column submission manuscript")
+        self.assertIn('w:num="1"', document_xml)
+
+def _docx_with_table() -> bytes:
+    with zipfile.ZipFile(io.BytesIO(_build_docx(TEXT))) as source:
+        entries = {name: source.read(name) for name in source.namelist()}
+
+    document_xml = entries["word/document.xml"].decode("utf-8")
+    table_xml = """
+<w:tbl>
+  <w:tr>
+    <w:tc><w:p><w:r><w:t>Measure</w:t></w:r></w:p></w:tc>
+    <w:tc><w:p><w:r><w:t>Value</w:t></w:r></w:p></w:tc>
+  </w:tr>
+  <w:tr>
+    <w:tc><w:p><w:r><w:t>Cohort size</w:t></w:r></w:p></w:tc>
+    <w:tc><w:p><w:r><w:t>184</w:t></w:r></w:p></w:tc>
+  </w:tr>
+</w:tbl>
+"""
+    entries["word/document.xml"] = document_xml.replace("<w:sectPr>", f"{table_xml}<w:sectPr>").encode("utf-8")
+    return _zip_entries(entries)
+
+
+def _docx_with_media() -> bytes:
+    with zipfile.ZipFile(io.BytesIO(_build_docx(TEXT))) as source:
+        entries = {name: source.read(name) for name in source.namelist()}
+    entries["word/media/image1.png"] = base64.b64decode(
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+    )
+    return _zip_entries(entries)
+
+
+def _zip_entries(entries):
+    output = io.BytesIO()
+    with zipfile.ZipFile(output, "w", zipfile.ZIP_DEFLATED) as archive:
+        for name, content in entries.items():
+            archive.writestr(name, content)
+    return output.getvalue()
+
+
+def _read_document_xml(docx_bytes: bytes) -> str:
+    with zipfile.ZipFile(io.BytesIO(docx_bytes)) as archive:
+        return archive.read("word/document.xml").decode("utf-8")
 
 
 if __name__ == "__main__":

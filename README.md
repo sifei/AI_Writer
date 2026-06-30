@@ -15,7 +15,7 @@ or PubMed credentials so the core workflow can be tested locally.
 - Abstract/manuscript extraction into an editable analysis field.
 - Journal recommendations with fit evidence and heuristic acceptance-likelihood scoring.
 - Reviewer-style comments, revision guidance, and cover-letter drafting.
-- Selected-journal Word `.docx` conversion with formatting checklist, warnings, and downloadable output.
+- Selected-journal Word `.docx` conversion that preserves manuscript text, tables, media files, and document structure while applying journal-specific layout/style rules.
 - Local-first deterministic worker logic with seams for future LLM and PubMed integrations.
 
 ## Stack
@@ -67,7 +67,7 @@ app/
 worker/
   biomed_assistant/
     analyzer.py   Manuscript extraction, journal ranking, and review comments
-    converter.py  Word parsing and journal-format document generation
+    converter.py  Structure-preserving Word journal formatter
     extractor.py  Upload text extraction for supported source formats
 tests/            Python worker tests
 data/
@@ -96,3 +96,16 @@ Manuscripts are treated as confidential unpublished research IP. The scaffold
 does not persist uploaded manuscript text by default, and production deployment
 should keep raw manuscript content out of analytics, prompt debug logs, and
 third-party training flows.
+
+## DOCX Conversion Notes
+
+The converter preserves the uploaded Word package instead of flattening it to
+plain text. It patches `word/document.xml` to apply journal-specific page
+layout, font, line-spacing, table styling, image sizing, declaration-section
+placeholders, and single-column or IEEE-style two-column settings. The API also
+returns table count, figure/media count, caption warnings, and layout mode.
+
+Exact publisher templates are not guaranteed yet. The output should be treated
+as a submission-ready manuscript draft that still needs author review for
+journal-specific edge cases, especially captions, figure sizing, reference
+style, and publisher template requirements.

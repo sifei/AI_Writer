@@ -452,7 +452,10 @@ export default function Home() {
                     <div className="conversionActions">
                       <div>
                         <h3>{conversion.fileName}</h3>
-                        <p>{conversion.extractedWordCount.toLocaleString()} words extracted and reformatted.</p>
+                        <p>
+                          {conversion.extractedWordCount.toLocaleString()} words · {conversion.tableCount} tables ·{" "}
+                          {conversion.figureCount} figures/media · {conversion.layoutMode}
+                        </p>
                       </div>
                       <button type="button" onClick={downloadConvertedDocx}>
                         Download .docx
@@ -468,6 +471,8 @@ export default function Home() {
                       <div>
                         <h4>Warnings</h4>
                         {conversion.warnings.map((warning) => <p key={warning}>{warning}</p>)}
+                        {conversion.captionWarnings.length ? <h4>Caption checks</h4> : null}
+                        {conversion.captionWarnings.map((warning) => <p key={warning}>{warning}</p>)}
                       </div>
                     </div>
 

@@ -3,7 +3,7 @@ import html
 import io
 import re
 import zipfile
-from typing import Dict, List
+from typing import Dict, List, Tuple
 from xml.etree import ElementTree
 
 try:
@@ -15,7 +15,13 @@ except ImportError:  # Allows package imports from unit tests.
 WORD_NS = {
     "w": "http://schemas.openxmlformats.org/wordprocessingml/2006/main",
     "r": "http://schemas.openxmlformats.org/officeDocument/2006/relationships",
+    "wp": "http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing",
+    "a": "http://schemas.openxmlformats.org/drawingml/2006/main",
+    "pic": "http://schemas.openxmlformats.org/drawingml/2006/picture",
 }
+
+for prefix, uri in WORD_NS.items():
+    ElementTree.register_namespace(prefix, uri)
 
 JOURNAL_RULES = {
     "BMC Medicine": {
@@ -56,19 +62,23 @@ def convert_docx_to_journal_format(payload: Dict) -> Dict:
     if len(text.strip()) < 100:
         raise ValueError("The uploaded Word document does not contain enough readable text.")
 
-    rules = _journal_rules(journal)
+    rules = _formatting_rules(journal)
     sections = _full_sections(text)
-    formatted_preview = _format_preview(journal, text, sections, rules)
-    warnings = _conversion_warnings(text, sections)
+    formatted_preview = _format_preview(journal, text, sections, rules["text_rules"])
+    output_docx, structure = _format_existing_docx(raw_docx, text, rules)
+    warnings = _conversion_warnings(text, sections, structure, rules)
     applied_rules = [
         f"Target journal: {journal}",
-        f"Abstract rule: {rules['abstract']}",
-        f"Section order: {', '.join(rules['order'])}",
-        rules["word_target"],
+        f"Layout mode: {rules['layout_mode']}",
+        f"Body font: {rules['font_family']} {rules['font_size_pt']} pt",
+        f"Line spacing: {rules['line_spacing']}",
+        f"Columns: {rules['columns']}",
+        f"Abstract rule: {rules['text_rules']['abstract']}",
+        f"Section order: {', '.join(rules['text_rules']['order'])}",
+        rules["text_rules"]["word_target"],
     ]
-
-    output_docx = _build_docx(formatted_preview)
     safe_journal = re.sub(r"[^A-Za-z0-9]+", "-", journal).strip("-").lower()
+    caption_warnings = _caption_warnings(text, structure)
 
     return {
         "journal": journal,
@@ -78,6 +88,10 @@ def convert_docx_to_journal_format(payload: Dict) -> Dict:
         "appliedRules": applied_rules,
         "warnings": warnings,
         "extractedWordCount": len(text.split()),
+        "tableCount": structure["table_count"],
+        "figureCount": structure["figure_count"],
+        "captionWarnings": caption_warnings,
+        "layoutMode": rules["layout_mode"],
     }
 
 
@@ -98,6 +112,238 @@ def _journal_rules(journal: str) -> Dict:
         "order": ["Title page", "Abstract", "Keywords", "Introduction", "Methods", "Results", "Discussion", "Declarations", "References"],
         "word_target": "Verify exact author instructions before final submission.",
     }
+
+
+def _formatting_rules(journal: str) -> Dict:
+    text_rules = _journal_rules(journal)
+    normalized = journal.lower()
+    rules = {
+        "journal": journal,
+        "text_rules": text_rules,
+        "layout_mode": "single-column submission manuscript",
+        "columns": 1,
+        "font_family": "Times New Roman",
+        "font_size_pt": 12,
+        "line_spacing": "double",
+        "line_spacing_twips": "480",
+        "paragraph_after_twips": "120",
+        "top_margin": "1440",
+        "right_margin": "1440",
+        "bottom_margin": "1440",
+        "left_margin": "1440",
+        "max_image_cx": 5486400,
+        "line_numbers": False,
+        "required_sections": ["Data availability", "Funding", "Competing interests"],
+    }
+
+    if "ieee access" in normalized:
+        rules.update(
+            {
+                "layout_mode": "IEEE two-column technical layout",
+                "columns": 2,
+                "font_family": "Times New Roman",
+                "font_size_pt": 10,
+                "line_spacing": "single",
+                "line_spacing_twips": "240",
+                "paragraph_after_twips": "80",
+                "top_margin": "720",
+                "right_margin": "720",
+                "bottom_margin": "720",
+                "left_margin": "720",
+                "required_sections": ["Index Terms", "Data availability", "Acknowledgment"],
+            }
+        )
+    elif "jamia" in normalized or "american medical informatics" in normalized:
+        rules.update(
+            {
+                "line_spacing": "double",
+                "required_sections": ["Background and Significance", "Funding", "Competing interests", "Author contributions"],
+            }
+        )
+    elif "biomedical informatics" in normalized:
+        rules.update(
+            {
+                "line_spacing": "double",
+                "required_sections": ["Declarations", "Data availability", "Competing interests"],
+            }
+        )
+    elif "npj digital medicine" in normalized:
+        rules.update(
+            {
+                "line_spacing": "single",
+                "line_spacing_twips": "300",
+                "required_sections": ["Data availability", "Code availability", "Author contributions", "Competing interests"],
+            }
+        )
+    elif "plos one" in normalized:
+        rules.update(
+            {
+                "line_spacing": "double",
+                "line_numbers": True,
+                "required_sections": ["Data availability", "Funding", "Competing interests"],
+            }
+        )
+
+    return rules
+
+
+def _format_existing_docx(raw_docx: bytes, text: str, rules: Dict) -> Tuple[bytes, Dict]:
+    with zipfile.ZipFile(io.BytesIO(raw_docx)) as archive:
+        entries = {name: archive.read(name) for name in archive.namelist()}
+
+    root = ElementTree.fromstring(entries["word/document.xml"])
+    structure = _document_structure(entries, root)
+    structure["inserted_sections"] = _ensure_required_sections(root, text, rules["required_sections"])
+
+    _apply_page_layout(root, rules)
+    _style_paragraphs(root, rules)
+    _style_tables(root)
+    _style_figures(root, rules)
+
+    entries["word/document.xml"] = ElementTree.tostring(root, encoding="utf-8", xml_declaration=True)
+
+    output = io.BytesIO()
+    with zipfile.ZipFile(output, "w", zipfile.ZIP_DEFLATED) as archive:
+        for name, content in entries.items():
+            archive.writestr(name, content)
+    return output.getvalue(), structure
+
+
+def _document_structure(entries: Dict[str, bytes], root: ElementTree.Element) -> Dict:
+    media_count = len([name for name in entries if name.startswith("word/media/")])
+    drawing_count = len(root.findall(".//w:drawing", WORD_NS))
+    return {
+        "table_count": len(root.findall(".//w:tbl", WORD_NS)),
+        "figure_count": max(media_count, drawing_count),
+        "media_count": media_count,
+        "drawing_count": drawing_count,
+    }
+
+
+def _apply_page_layout(root: ElementTree.Element, rules: Dict) -> None:
+    body = root.find("w:body", WORD_NS)
+    if body is None:
+        return
+    sect_pr = body.find("w:sectPr", WORD_NS)
+    if sect_pr is None:
+        sect_pr = ElementTree.SubElement(body, _qn("w:sectPr"))
+
+    pg_sz = _ensure_child(sect_pr, "w:pgSz")
+    pg_sz.set(_qn("w:w"), "12240")
+    pg_sz.set(_qn("w:h"), "15840")
+
+    pg_mar = _ensure_child(sect_pr, "w:pgMar")
+    pg_mar.set(_qn("w:top"), rules["top_margin"])
+    pg_mar.set(_qn("w:right"), rules["right_margin"])
+    pg_mar.set(_qn("w:bottom"), rules["bottom_margin"])
+    pg_mar.set(_qn("w:left"), rules["left_margin"])
+    pg_mar.set(_qn("w:header"), "720")
+    pg_mar.set(_qn("w:footer"), "720")
+    pg_mar.set(_qn("w:gutter"), "0")
+
+    cols = _ensure_child(sect_pr, "w:cols")
+    cols.set(_qn("w:num"), str(rules["columns"]))
+    if rules["columns"] == 2:
+        cols.set(_qn("w:space"), "720")
+    elif _qn("w:space") in cols.attrib:
+        del cols.attrib[_qn("w:space")]
+
+    existing_line_numbers = sect_pr.find("w:lnNumType", WORD_NS)
+    if rules.get("line_numbers"):
+        line_numbers = _ensure_child(sect_pr, "w:lnNumType")
+        line_numbers.set(_qn("w:countBy"), "1")
+    elif existing_line_numbers is not None:
+        sect_pr.remove(existing_line_numbers)
+
+
+def _style_paragraphs(root: ElementTree.Element, rules: Dict) -> None:
+    for index, paragraph in enumerate(root.findall(".//w:p", WORD_NS)):
+        text = _paragraph_text(paragraph)
+        if not text:
+            continue
+
+        p_pr = _ensure_first_child(paragraph, "w:pPr")
+        spacing = _ensure_child(p_pr, "w:spacing")
+        spacing.set(_qn("w:line"), rules["line_spacing_twips"])
+        spacing.set(_qn("w:lineRule"), "auto")
+        spacing.set(_qn("w:after"), rules["paragraph_after_twips"])
+
+        if _looks_like_heading(text):
+            _set_paragraph_style(p_pr, "Heading1")
+            _set_paragraph_run_format(paragraph, rules["font_family"], 14, bold=True)
+        elif _looks_like_caption(text):
+            _set_paragraph_run_format(paragraph, rules["font_family"], max(9, rules["font_size_pt"] - 1), italic=True)
+        elif index == 0 or text.lower().startswith("title:"):
+            _set_paragraph_run_format(paragraph, rules["font_family"], 14, bold=True)
+            jc = _ensure_child(p_pr, "w:jc")
+            jc.set(_qn("w:val"), "center")
+        else:
+            _set_paragraph_run_format(paragraph, rules["font_family"], rules["font_size_pt"])
+
+
+def _style_tables(root: ElementTree.Element) -> None:
+    for table in root.findall(".//w:tbl", WORD_NS):
+        tbl_pr = _ensure_first_child(table, "w:tblPr")
+        tbl_w = _ensure_child(tbl_pr, "w:tblW")
+        tbl_w.set(_qn("w:w"), "5000")
+        tbl_w.set(_qn("w:type"), "pct")
+
+        borders = _ensure_child(tbl_pr, "w:tblBorders")
+        for border_name in ["top", "left", "bottom", "right", "insideH", "insideV"]:
+            border = _ensure_child(borders, f"w:{border_name}")
+            border.set(_qn("w:val"), "single")
+            border.set(_qn("w:sz"), "4")
+            border.set(_qn("w:space"), "0")
+            border.set(_qn("w:color"), "B7C4BD")
+
+        margins = _ensure_child(tbl_pr, "w:tblCellMar")
+        for side in ["top", "left", "bottom", "right"]:
+            margin = _ensure_child(margins, f"w:{side}")
+            margin.set(_qn("w:w"), "120")
+            margin.set(_qn("w:type"), "dxa")
+
+        rows = table.findall("w:tr", WORD_NS)
+        if rows:
+            tr_pr = _ensure_first_child(rows[0], "w:trPr")
+            header = _ensure_child(tr_pr, "w:tblHeader")
+            header.set(_qn("w:val"), "true")
+
+
+def _style_figures(root: ElementTree.Element, rules: Dict) -> None:
+    max_cx = rules["max_image_cx"]
+    for extent in root.findall(".//wp:extent", WORD_NS):
+        try:
+            cx = int(extent.get("cx", "0"))
+            cy = int(extent.get("cy", "0"))
+        except ValueError:
+            continue
+        if cx > max_cx and cx > 0:
+            ratio = max_cx / cx
+            extent.set("cx", str(max_cx))
+            extent.set("cy", str(max(1, int(cy * ratio))))
+
+
+def _ensure_required_sections(root: ElementTree.Element, text: str, required_sections: List[str]) -> List[str]:
+    body = root.find("w:body", WORD_NS)
+    if body is None:
+        return []
+
+    sect_pr = body.find("w:sectPr", WORD_NS)
+    insert_index = list(body).index(sect_pr) if sect_pr is not None else len(list(body))
+    inserted = []
+    lowered = text.lower()
+
+    for section in required_sections:
+        if section.lower() in lowered:
+            continue
+        heading = _new_paragraph(section, bold=True)
+        placeholder = _new_paragraph(f"Add {section.lower()} statement required by the selected journal before submission.")
+        body.insert(insert_index, heading)
+        body.insert(insert_index + 1, placeholder)
+        insert_index += 2
+        inserted.append(section)
+
+    return inserted
 
 
 def _extract_docx_text(raw_docx: bytes) -> str:
@@ -174,7 +420,7 @@ def _format_abstract(abstract: str, abstract_rule: str) -> str:
     )
 
 
-def _conversion_warnings(text: str, sections: List[Dict]) -> List[str]:
+def _conversion_warnings(text: str, sections: List[Dict], structure: Dict, rules: Dict) -> List[str]:
     present = {section["name"].lower() for section in sections}
     warnings = []
     for required in ["abstract", "methods", "results", "discussion"]:
@@ -184,7 +430,26 @@ def _conversion_warnings(text: str, sections: List[Dict]) -> List[str]:
         warnings.append("Ethics/consent language was not detected.")
     if not re.search(r"(?i)data availability|code availability|repository|accession", text):
         warnings.append("Data or code availability language was not detected.")
+    for inserted in structure.get("inserted_sections", []):
+        warnings.append(f"Added placeholder for missing required section: {inserted}.")
+    if structure["table_count"]:
+        warnings.append(f"Detected and preserved {structure['table_count']} table(s); verify column widths after download.")
+    if structure["figure_count"]:
+        warnings.append(f"Detected and preserved {structure['figure_count']} figure/media item(s); verify captions and image placement after download.")
+    if rules["columns"] == 2:
+        warnings.append("Applied two-column IEEE-style layout; verify this is appropriate for the selected submission stage.")
     return warnings or ["No major structural warnings detected by the local formatter."]
+
+
+def _caption_warnings(text: str, structure: Dict) -> List[str]:
+    warnings = []
+    figure_caption_count = len(re.findall(r"(?im)^\s*(figure|fig\.?)\s*\d+", text))
+    table_caption_count = len(re.findall(r"(?im)^\s*table\s*\d+", text))
+    if structure["figure_count"] and figure_caption_count < structure["figure_count"]:
+        warnings.append("Some figures may be missing captions or standard Figure numbering.")
+    if structure["table_count"] and table_caption_count < structure["table_count"]:
+        warnings.append("Some tables may be missing captions or standard Table numbering.")
+    return warnings
 
 
 def _full_sections(text: str) -> List[Dict]:
@@ -266,6 +531,121 @@ def _build_docx(text: str) -> bytes:
         archive.writestr("_rels/.rels", rels)
         archive.writestr("word/document.xml", document)
     return buffer.getvalue()
+
+
+def _qn(tag: str) -> str:
+    prefix, local = tag.split(":", 1)
+    return f"{{{WORD_NS[prefix]}}}{local}"
+
+
+def _ensure_child(parent: ElementTree.Element, tag: str) -> ElementTree.Element:
+    child = parent.find(tag, WORD_NS)
+    if child is None:
+        child = ElementTree.SubElement(parent, _qn(tag))
+    return child
+
+
+def _ensure_first_child(parent: ElementTree.Element, tag: str) -> ElementTree.Element:
+    child = parent.find(tag, WORD_NS)
+    if child is not None:
+        return child
+    child = ElementTree.Element(_qn(tag))
+    parent.insert(0, child)
+    return child
+
+
+def _paragraph_text(paragraph: ElementTree.Element) -> str:
+    return "".join(node.text or "" for node in paragraph.findall(".//w:t", WORD_NS)).strip()
+
+
+def _looks_like_heading(text: str) -> bool:
+    normalized = text.strip().lower().rstrip(":")
+    headings = {
+        "abstract",
+        "keywords",
+        "index terms",
+        "introduction",
+        "background",
+        "background and significance",
+        "objective",
+        "methods",
+        "materials and methods",
+        "results",
+        "discussion",
+        "conclusion",
+        "conclusions",
+        "data availability",
+        "code availability",
+        "author contributions",
+        "competing interests",
+        "funding",
+        "declarations",
+        "references",
+        "acknowledgments",
+        "acknowledgements",
+    }
+    return normalized in headings or bool(re.match(r"^\d+(\.\d+)*\s+[A-Z][A-Za-z ]{2,60}$", text.strip()))
+
+
+def _looks_like_caption(text: str) -> bool:
+    return bool(re.match(r"(?i)^\s*(figure|fig\.?|table)\s*\d+", text))
+
+
+def _set_paragraph_style(p_pr: ElementTree.Element, style_id: str) -> None:
+    style = _ensure_child(p_pr, "w:pStyle")
+    style.set(_qn("w:val"), style_id)
+
+
+def _set_paragraph_run_format(
+    paragraph: ElementTree.Element,
+    font_family: str,
+    font_size_pt: int,
+    bold: bool = False,
+    italic: bool = False,
+) -> None:
+    runs = paragraph.findall("w:r", WORD_NS)
+    if not runs:
+        return
+    for run in runs:
+        r_pr = _ensure_first_child(run, "w:rPr")
+        fonts = _ensure_child(r_pr, "w:rFonts")
+        fonts.set(_qn("w:ascii"), font_family)
+        fonts.set(_qn("w:hAnsi"), font_family)
+        size = _ensure_child(r_pr, "w:sz")
+        size.set(_qn("w:val"), str(font_size_pt * 2))
+
+        _set_toggle(r_pr, "w:b", bold)
+        _set_toggle(r_pr, "w:i", italic)
+
+
+def _set_toggle(parent: ElementTree.Element, tag: str, enabled: bool) -> None:
+    existing = parent.find(tag, WORD_NS)
+    if enabled:
+        node = _ensure_child(parent, tag)
+        node.set(_qn("w:val"), "true")
+    elif existing is not None:
+        parent.remove(existing)
+
+
+def _new_paragraph(text: str, bold: bool = False) -> ElementTree.Element:
+    paragraph = ElementTree.Element(_qn("w:p"))
+    p_pr = ElementTree.SubElement(paragraph, _qn("w:pPr"))
+    if bold:
+        _set_paragraph_style(p_pr, "Heading1")
+    spacing = ElementTree.SubElement(p_pr, _qn("w:spacing"))
+    spacing.set(_qn("w:after"), "120")
+    run = ElementTree.SubElement(paragraph, _qn("w:r"))
+    r_pr = ElementTree.SubElement(run, _qn("w:rPr"))
+    fonts = ElementTree.SubElement(r_pr, _qn("w:rFonts"))
+    fonts.set(_qn("w:ascii"), "Times New Roman")
+    fonts.set(_qn("w:hAnsi"), "Times New Roman")
+    size = ElementTree.SubElement(r_pr, _qn("w:sz"))
+    size.set(_qn("w:val"), "24")
+    if bold:
+        ElementTree.SubElement(r_pr, _qn("w:b")).set(_qn("w:val"), "true")
+    text_node = ElementTree.SubElement(run, _qn("w:t"))
+    text_node.text = text
+    return paragraph
 
 
 def _paragraph_xml(text: str) -> str:
