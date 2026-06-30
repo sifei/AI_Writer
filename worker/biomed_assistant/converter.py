@@ -7,9 +7,9 @@ from typing import Dict, List
 from xml.etree import ElementTree
 
 try:
-    from analyzer import JOURNAL_PROFILES, _sections, _trim_sentence
+    from analyzer import JOURNAL_PROFILES, _trim_sentence
 except ImportError:  # Allows package imports from unit tests.
-    from .analyzer import JOURNAL_PROFILES, _sections, _trim_sentence
+    from .analyzer import JOURNAL_PROFILES, _trim_sentence
 
 
 WORD_NS = {
@@ -57,7 +57,7 @@ def convert_docx_to_journal_format(payload: Dict) -> Dict:
         raise ValueError("The uploaded Word document does not contain enough readable text.")
 
     rules = _journal_rules(journal)
-    sections = _sections(text)
+    sections = _full_sections(text)
     formatted_preview = _format_preview(journal, text, sections, rules)
     warnings = _conversion_warnings(text, sections)
     applied_rules = [
@@ -116,13 +116,14 @@ def _extract_docx_text(raw_docx: bytes) -> str:
 
 def _format_preview(journal: str, text: str, sections: List[Dict], rules: Dict) -> str:
     title = _first_nonempty_line(text)
-    abstract = _extract_named_section(text, "abstract") or _trim_sentence(text, 1200)
-    section_map = {section["name"].lower(): section for section in sections}
+    abstract = _extract_named_section(text, "abstract") or _trim_sentence(text, 2500)
+    section_map = {_section_key(section["name"]): section["body"] for section in sections}
+    consumed_keys = set()
     order_lines = []
 
     for section_name in rules["order"]:
-        key = section_name.lower().replace("materials and methods", "methods").replace("background", "introduction")
-        body = section_map.get(key, {}).get("summary", "")
+        key = _section_key(section_name)
+        body = section_map.get(key, "")
         if section_name == "Title page":
             body = title
         elif section_name == "Abstract":
@@ -135,14 +136,26 @@ def _format_preview(journal: str, text: str, sections: List[Dict], rules: Dict) 
             body = "Add repository, accession, code, or reasonable-request language before submission."
         elif not body:
             body = "Move or draft this section according to the journal instructions."
+        else:
+            consumed_keys.add(key)
 
         order_lines.append(f"{section_name}\n{body}")
+
+    remaining_sections = [
+        f"{section['name']}\n{section['body']}"
+        for section in sections
+        if _section_key(section["name"]) not in consumed_keys
+        and _section_key(section["name"]) not in {"title", "abstract"}
+    ]
+
+    if not sections or (len(sections) == 1 and sections[0]["name"] == "Manuscript"):
+        remaining_sections = [f"Manuscript body\n{_strip_title_and_abstract(text)}"]
 
     checklist = "\n".join(f"- {item}" for item in rules.get("word_target", "").split("; ") if item)
     return (
         f"{journal} formatted submission draft\n\n"
         f"Formatting checklist\n{checklist}\n\n"
-        + "\n\n".join(order_lines)
+        + "\n\n".join(order_lines + remaining_sections)
     )
 
 
@@ -150,10 +163,13 @@ def _format_abstract(abstract: str, abstract_rule: str) -> str:
     if "structured" not in abstract_rule.lower():
         return abstract
 
+    if re.search(r"(?i)\b(background|methods|results|conclusions?)\s*:", abstract):
+        return abstract
+
     return (
-        f"Background: {_trim_sentence(abstract, 300)}\n"
-        "Methods: Confirm study design, population, endpoint, and statistical methods.\n"
-        "Results: Insert the main numerical result and effect estimate.\n"
+        f"Background: {abstract}\n"
+        "Methods: Confirm study design, population, endpoint, and statistical methods in this subsection.\n"
+        "Results: Move the main numerical result and effect estimate here if they are currently embedded above.\n"
         "Conclusions: State the interpretation without overclaiming clinical deployment."
     )
 
@@ -169,6 +185,58 @@ def _conversion_warnings(text: str, sections: List[Dict]) -> List[str]:
     if not re.search(r"(?i)data availability|code availability|repository|accession", text):
         warnings.append("Data or code availability language was not detected.")
     return warnings or ["No major structural warnings detected by the local formatter."]
+
+
+def _full_sections(text: str) -> List[Dict]:
+    pattern = re.compile(
+        r"(?ims)^\s*(title|abstract|introduction|background|methods|materials and methods|results|discussion|limitations|conclusions?|references|acknowledgements?|funding|data availability|ethics|declarations):?\s*(.*?)(?=^\s*(?:title|abstract|introduction|background|methods|materials and methods|results|discussion|limitations|conclusions?|references|acknowledgements?|funding|data availability|ethics|declarations):?\s*|\Z)"
+    )
+    sections = []
+    for name, body in pattern.findall(text):
+        normalized_name = name.strip().title()
+        if normalized_name == "Materials And Methods":
+            normalized_name = "Methods"
+        if normalized_name == "Conclusion":
+            normalized_name = "Conclusions"
+        clean_body = _clean_section_body(body)
+        if clean_body:
+            sections.append(
+                {
+                    "name": normalized_name,
+                    "body": clean_body,
+                    "wordCount": len(clean_body.split()),
+                }
+            )
+
+    if sections:
+        return sections
+
+    return [
+        {
+            "name": "Manuscript",
+            "body": _clean_section_body(text),
+            "wordCount": len(text.split()),
+        }
+    ]
+
+
+def _section_key(name: str) -> str:
+    lowered = name.strip().lower()
+    aliases = {
+        "materials and methods": "methods",
+        "background": "introduction",
+        "conclusion": "conclusions",
+    }
+    return aliases.get(lowered, lowered)
+
+
+def _clean_section_body(text: str) -> str:
+    return re.sub(r"\n{3,}", "\n\n", text.strip())
+
+
+def _strip_title_and_abstract(text: str) -> str:
+    without_title = re.sub(r"(?im)^\s*title:\s*.+$", "", text).strip()
+    return _clean_section_body(without_title)
 
 
 def _build_docx(text: str) -> bytes:

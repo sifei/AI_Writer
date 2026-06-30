@@ -1,7 +1,7 @@
 import base64
 import unittest
 
-from worker.biomed_assistant.converter import _build_docx, convert_docx_to_journal_format
+from worker.biomed_assistant.converter import _build_docx, _extract_docx_text, convert_docx_to_journal_format
 
 
 TEXT = """
@@ -40,6 +40,38 @@ class ConverterTests(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             convert_docx_to_journal_format({"docxBase64": encoded})
+
+    def test_convert_docx_preserves_full_manuscript_body(self):
+        long_methods = " ".join(["methods detail"] * 900)
+        long_results = " ".join(["results finding"] * 900)
+        long_discussion = " ".join(["discussion implication"] * 900)
+        manuscript = f"""
+Title: Long manuscript preservation test
+
+Abstract: This manuscript tests whether conversion keeps the full article body instead of only short summaries.
+
+Methods: {long_methods}
+
+Results: {long_results}
+
+Discussion: {long_discussion}
+"""
+        encoded = base64.b64encode(_build_docx(manuscript)).decode("ascii")
+
+        result = convert_docx_to_journal_format(
+            {
+                "journal": "PLOS ONE",
+                "fileName": "long-manuscript.docx",
+                "docxBase64": encoded,
+            }
+        )
+        converted_text = _extract_docx_text(base64.b64decode(result["convertedDocxBase64"]))
+
+        self.assertGreater(result["extractedWordCount"], 5000)
+        self.assertGreater(len(converted_text.split()), 5000)
+        self.assertIn("methods detail", converted_text)
+        self.assertIn("results finding", converted_text)
+        self.assertIn("discussion implication", converted_text)
 
 
 if __name__ == "__main__":
