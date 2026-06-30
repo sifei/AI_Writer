@@ -144,6 +144,21 @@ Discussion: {long_discussion}
         self.assertEqual(result["layoutMode"], "single-column submission manuscript")
         self.assertIn('w:num="1"', document_xml)
 
+    def test_convert_docx_removes_dangling_markup_compatibility_ignorable(self):
+        encoded = base64.b64encode(_docx_with_markup_compatibility()).decode("ascii")
+
+        result = convert_docx_to_journal_format(
+            {
+                "journal": "PLOS ONE",
+                "fileName": "word-mc.docx",
+                "docxBase64": encoded,
+            }
+        )
+        document_xml = _read_document_xml(base64.b64decode(result["convertedDocxBase64"]))
+
+        self.assertNotIn("Ignorable", document_xml)
+        self.assertNotIn("pStyle", document_xml)
+
 def _docx_with_table() -> bytes:
     with zipfile.ZipFile(io.BytesIO(_build_docx(TEXT))) as source:
         entries = {name: source.read(name) for name in source.namelist()}
@@ -171,6 +186,21 @@ def _docx_with_media() -> bytes:
     entries["word/media/image1.png"] = base64.b64decode(
         "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
     )
+    return _zip_entries(entries)
+
+
+def _docx_with_markup_compatibility() -> bytes:
+    with zipfile.ZipFile(io.BytesIO(_build_docx(TEXT))) as source:
+        entries = {name: source.read(name) for name in source.namelist()}
+
+    document_xml = entries["word/document.xml"].decode("utf-8")
+    document_xml = document_xml.replace(
+        "<w:document ",
+        '<w:document xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" '
+        'xmlns:w14="http://schemas.microsoft.com/office/word/2010/wordml" mc:Ignorable="w14" ',
+        1,
+    )
+    entries["word/document.xml"] = document_xml.encode("utf-8")
     return _zip_entries(entries)
 
 

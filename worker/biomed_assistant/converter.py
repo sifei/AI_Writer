@@ -18,6 +18,11 @@ WORD_NS = {
     "wp": "http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing",
     "a": "http://schemas.openxmlformats.org/drawingml/2006/main",
     "pic": "http://schemas.openxmlformats.org/drawingml/2006/picture",
+    "mc": "http://schemas.openxmlformats.org/markup-compatibility/2006",
+    "w14": "http://schemas.microsoft.com/office/word/2010/wordml",
+    "w15": "http://schemas.microsoft.com/office/word/2012/wordml",
+    "w16": "http://schemas.microsoft.com/office/word/2018/wordml",
+    "wp14": "http://schemas.microsoft.com/office/word/2010/wordprocessingDrawing",
 }
 
 for prefix, uri in WORD_NS.items():
@@ -199,6 +204,7 @@ def _format_existing_docx(raw_docx: bytes, text: str, rules: Dict) -> Tuple[byte
     _style_paragraphs(root, rules)
     _style_tables(root)
     _style_figures(root, rules)
+    _strip_markup_compatibility_ignorable(root)
 
     entries["word/document.xml"] = ElementTree.tostring(root, encoding="utf-8", xml_declaration=True)
 
@@ -269,7 +275,6 @@ def _style_paragraphs(root: ElementTree.Element, rules: Dict) -> None:
         spacing.set(_qn("w:after"), rules["paragraph_after_twips"])
 
         if _looks_like_heading(text):
-            _set_paragraph_style(p_pr, "Heading1")
             _set_paragraph_run_format(paragraph, rules["font_family"], 14, bold=True)
         elif _looks_like_caption(text):
             _set_paragraph_run_format(paragraph, rules["font_family"], max(9, rules["font_size_pt"] - 1), italic=True)
@@ -630,8 +635,6 @@ def _set_toggle(parent: ElementTree.Element, tag: str, enabled: bool) -> None:
 def _new_paragraph(text: str, bold: bool = False) -> ElementTree.Element:
     paragraph = ElementTree.Element(_qn("w:p"))
     p_pr = ElementTree.SubElement(paragraph, _qn("w:pPr"))
-    if bold:
-        _set_paragraph_style(p_pr, "Heading1")
     spacing = ElementTree.SubElement(p_pr, _qn("w:spacing"))
     spacing.set(_qn("w:after"), "120")
     run = ElementTree.SubElement(paragraph, _qn("w:r"))
@@ -646,6 +649,13 @@ def _new_paragraph(text: str, bold: bool = False) -> ElementTree.Element:
     text_node = ElementTree.SubElement(run, _qn("w:t"))
     text_node.text = text
     return paragraph
+
+
+def _strip_markup_compatibility_ignorable(root: ElementTree.Element) -> None:
+    for element in root.iter():
+        for attr in list(element.attrib):
+            if attr == _qn("mc:Ignorable") or attr.endswith("}Ignorable"):
+                del element.attrib[attr]
 
 
 def _paragraph_xml(text: str) -> str:
