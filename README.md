@@ -70,7 +70,19 @@ worker/
     converter.py  Word parsing and journal-format document generation
     extractor.py  Upload text extraction for supported source formats
 tests/            Python worker tests
+data/
+  journal_profile.schema.json  Reusable journal profile shape
+  journal_profiles/            Source-backed journal profiles
 ```
+
+## Journal Profiles
+
+Journal profile files live in `data/journal_profiles/` and should follow
+`data/journal_profile.schema.json`. Each profile should include the journal
+scope, keywords, article types, formatting rules, recommendation inputs,
+source URLs, and a `last_verified` date. Do not guess values like acceptance
+rate, review time, or APCs; use `null` until those values are verified from a
+reliable source.
 
 ## Product Claim Boundary
 

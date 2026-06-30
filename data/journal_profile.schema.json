@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "JournalProfile",
+  "type": "object",
+  "required": [
+    "id",
+    "journal",
+    "publisher",
+    "scope",
+    "keywords",
+    "article_types",
+    "formatting",
+    "indexing",
+    "business_model",
+    "recommendation_inputs",
+    "evidence_sources",
+    "last_verified"
+  ],
+  "properties": {
+    "id": { "type": "string" },
+    "journal": { "type": "string" },
+    "publisher": { "type": "string" },
+    "journal_url": { "type": "string" },
+    "author_instructions_url": { "type": "string" },
+    "scope": { "type": "string" },
+    "subject_areas": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "keywords": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "article_types": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "formatting": {
+      "type": "object",
+      "properties": {
+        "file_formats": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "abstract_style": { "type": "string" },
+        "abstract_word_limit": { "type": ["integer", "null"] },
+        "manuscript_word_limit": { "type": ["integer", "null"] },
+        "section_order": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "reference_style": { "type": "string" },
+        "figure_table_policy": { "type": "string" },
+        "special_requirements": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "indexing": {
+      "type": "object",
+      "properties": {
+        "pubmed": { "type": ["boolean", "null"] },
+        "medline": { "type": ["boolean", "null"] },
+        "pmc": { "type": ["boolean", "null"] },
+        "scopus": { "type": ["boolean", "null"] },
+        "web_of_science": { "type": ["boolean", "null"] },
+        "notes": { "type": "string" }
+      }
+    },
+    "business_model": {
+      "type": "object",
+      "properties": {
+        "open_access": { "type": ["boolean", "null"] },
+        "license": { "type": ["string", "null"] },
+        "apc": { "type": ["string", "null"] },
+        "fee_support_available": { "type": ["boolean", "null"] }
+      }
+    },
+    "recommendation_inputs": {
+      "type": "object",
+      "properties": {
+        "competitiveness": { "type": "number" },
+        "fit_strengths": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "fit_risks": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "acceptance_rate": { "type": ["number", "null"] },
+        "review_time": { "type": ["string", "null"] }
+      }
+    },
+    "checklist": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "evidence_sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["label", "url"],
+        "properties": {
+          "label": { "type": "string" },
+          "url": { "type": "string" }
+        }
+      }
+    },
+    "last_verified": { "type": "string" }
+  }
+}

@@ -1,0 +1,134 @@
+{
+  "id": "plos-one",
+  "journal": "PLOS ONE",
+  "publisher": "Public Library of Science",
+  "journal_url": "https://journals.plos.org/plosone",
+  "author_instructions_url": "https://journals.plos.org/plosone/s/submission-guidelines",
+  "scope": "Broad multidisciplinary journal for technically and ethically sound primary research across science and medicine. Editorial fit should emphasize methodological rigor, reproducibility, transparent reporting, and avoiding claims based only on perceived importance.",
+  "subject_areas": [
+    "Biology",
+    "Medicine and health sciences",
+    "Genetics and genomics",
+    "Computational biology",
+    "Public health",
+    "Clinical research",
+    "Engineering and technology",
+    "Physical sciences",
+    "Social sciences"
+  ],
+  "keywords": [
+    "methodological rigor",
+    "reproducibility",
+    "data availability",
+    "primary research",
+    "cohort",
+    "clinical trial",
+    "systematic review",
+    "meta-analysis",
+    "observational study",
+    "biomarker",
+    "public health",
+    "statistical analysis",
+    "open science"
+  ],
+  "article_types": [
+    "Research Article",
+    "Systematic Review",
+    "Meta-analysis",
+    "Clinical Trial",
+    "Registered Report",
+    "Lab Protocol",
+    "Study Protocol",
+    "Methods, Software, Databases, and Tools"
+  ],
+  "formatting": {
+    "file_formats": [
+      "DOC",
+      "DOCX",
+      "RTF",
+      "LaTeX submitted as PDF"
+    ],
+    "abstract_style": "Unstructured abstract",
+    "abstract_word_limit": 300,
+    "manuscript_word_limit": null,
+    "section_order": [
+      "Title page",
+      "Abstract",
+      "Introduction",
+      "Materials and Methods",
+      "Results",
+      "Discussion",
+      "Conclusions (optional)",
+      "Acknowledgments",
+      "References",
+      "Supporting information captions (if applicable)"
+    ],
+    "reference_style": "Vancouver style",
+    "figure_table_policy": "Figures and tables are inserted immediately after first citation in the manuscript text; figure files are uploaded separately.",
+    "special_requirements": [
+      "English-language manuscript",
+      "Page numbers and continuous line numbers",
+      "Double-spaced manuscript text",
+      "No footnotes",
+      "Define abbreviations at first use",
+      "Data availability statement",
+      "Financial disclosure statement",
+      "Competing interests statement",
+      "Ethics and consent statements where applicable",
+      "Study-type reporting guidelines where applicable"
+    ]
+  },
+  "indexing": {
+    "pubmed": true,
+    "medline": true,
+    "pmc": null,
+    "scopus": true,
+    "web_of_science": true,
+    "notes": "Indexing should be re-verified through NLM Catalog, Scopus, and Web of Science before displaying production badges."
+  },
+  "business_model": {
+    "open_access": true,
+    "license": "Creative Commons license used by PLOS journals; verify exact license terms at submission.",
+    "apc": null,
+    "fee_support_available": true
+  },
+  "recommendation_inputs": {
+    "competitiveness": 0.52,
+    "fit_strengths": [
+      "Good fit for methodologically sound biomedical studies that may not need a narrow specialty audience.",
+      "Good fit when transparent methods, complete reporting, data availability, and reproducibility are strong.",
+      "Good fit for studies where technical validity is stronger than novelty or perceived impact."
+    ],
+    "fit_risks": [
+      "Not ideal when the author needs a narrow specialty journal audience.",
+      "Risk increases if data availability, ethics, statistical reporting, or reproducibility details are weak.",
+      "Risk increases if conclusions are overstated relative to study design or validation."
+    ],
+    "acceptance_rate": null,
+    "review_time": null
+  },
+  "checklist": [
+    "Keep the abstract at or below 300 words and avoid citations.",
+    "Use Title page, Abstract, Introduction, Materials and Methods, Results, Discussion, optional Conclusions, Acknowledgments, References.",
+    "Emphasize methodological rigor rather than perceived importance.",
+    "Add data availability, funding, competing interests, ethics, and consent statements.",
+    "Use Vancouver reference style.",
+    "Add page numbers and continuous line numbers.",
+    "Avoid footnotes and nonstandard abbreviations."
+  ],
+  "evidence_sources": [
+    {
+      "label": "PLOS ONE submission guidelines",
+      "url": "https://journals.plos.org/plosone/s/submission-guidelines"
+    },
+    {
+      "label": "PLOS ONE journal information",
+      "url": "https://journals.plos.org/plosone/s/journal-information"
+    },
+    {
+      "label": "PLOS publication fees",
+      "url": "https://plos.org/fees/"
+    }
+  ],
+  "last_verified": "2026-06-30"
+}
