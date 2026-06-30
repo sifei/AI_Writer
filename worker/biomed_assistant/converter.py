@@ -3,7 +3,7 @@ import html
 import io
 import re
 import zipfile
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 from xml.etree import ElementTree
 
 try:
@@ -139,6 +139,8 @@ def _formatting_rules(journal: str) -> Dict:
         "max_image_cx": 5486400,
         "line_numbers": False,
         "required_sections": ["Data availability", "Funding", "Competing interests"],
+        "front_matter_single_column": False,
+        "wide_objects_single_column": False,
     }
 
     if "ieee access" in normalized:
@@ -155,7 +157,10 @@ def _formatting_rules(journal: str) -> Dict:
                 "right_margin": "720",
                 "bottom_margin": "720",
                 "left_margin": "720",
+                "max_image_cx": 6858000,
                 "required_sections": ["Index Terms", "Data availability", "Acknowledgment"],
+                "front_matter_single_column": True,
+                "wide_objects_single_column": True,
             }
         )
     elif "jamia" in normalized or "american medical informatics" in normalized:
@@ -201,6 +206,8 @@ def _format_existing_docx(raw_docx: bytes, text: str, rules: Dict) -> Tuple[byte
     structure["inserted_sections"] = _ensure_required_sections(root, text, rules["required_sections"])
 
     _apply_page_layout(root, rules)
+    if rules.get("front_matter_single_column") or rules.get("wide_objects_single_column"):
+        _apply_mixed_column_ieee_layout(root, rules, structure)
     _style_paragraphs(root, rules)
     _style_tables(root)
     _style_figures(root, rules)
@@ -267,6 +274,91 @@ def _apply_section_layout(sect_pr: ElementTree.Element, rules: Dict) -> None:
         line_numbers.set(_qn("w:countBy"), "1")
     elif existing_line_numbers is not None:
         sect_pr.remove(existing_line_numbers)
+
+
+def _apply_mixed_column_ieee_layout(root: ElementTree.Element, rules: Dict, structure: Dict) -> None:
+    body = root.find("w:body", WORD_NS)
+    if body is None:
+        return
+
+    front_breaks = 0
+    wide_table_sections = 0
+    wide_figure_sections = 0
+    front_matter_end_index = 0
+
+    if rules.get("front_matter_single_column"):
+        break_index = _front_matter_break_index(body)
+        if break_index is not None and break_index > 0:
+            body.insert(break_index, _section_break_paragraph(rules, columns=1))
+            front_breaks = 1
+            front_matter_end_index = break_index + 1
+
+    if rules.get("wide_objects_single_column"):
+        children = list(body)
+        offset = 0
+        for index, child in enumerate(children):
+            if index < front_matter_end_index:
+                continue
+            if child.tag == _qn("w:sectPr") or _is_section_break_paragraph(child):
+                continue
+            object_kind = _wide_object_kind(child)
+            if object_kind is None:
+                continue
+            adjusted_index = index + offset
+            body.insert(adjusted_index, _section_break_paragraph(rules, columns=2))
+            body.insert(adjusted_index + 2, _section_break_paragraph(rules, columns=1))
+            offset += 2
+            if object_kind == "table":
+                wide_table_sections += 1
+            elif object_kind == "figure":
+                wide_figure_sections += 1
+
+    structure["front_matter_single_column"] = front_breaks
+    structure["full_width_table_count"] = wide_table_sections
+    structure["full_width_figure_count"] = wide_figure_sections
+
+
+def _front_matter_break_index(body: ElementTree.Element) -> Optional[int]:
+    for index, child in enumerate(list(body)):
+        if child.tag != _qn("w:p"):
+            continue
+        text = _paragraph_text(child)
+        if _starts_body_section(text):
+            return index
+    return None
+
+
+def _starts_body_section(text: str) -> bool:
+    return bool(
+        re.match(
+            r"(?i)^\s*(\d+(\.\d+)*\s+)?(introduction|background|methods|materials and methods|results|discussion)\b\s*:?",
+            text.strip(),
+        )
+    )
+
+
+def _wide_object_kind(element: ElementTree.Element) -> Optional[str]:
+    if element.tag == _qn("w:tbl"):
+        return "table"
+    if element.tag == _qn("w:p") and element.findall(".//w:drawing", WORD_NS):
+        return "figure"
+    return None
+
+
+def _is_section_break_paragraph(element: ElementTree.Element) -> bool:
+    return element.tag == _qn("w:p") and element.find("w:pPr/w:sectPr", WORD_NS) is not None
+
+
+def _section_break_paragraph(rules: Dict, columns: int) -> ElementTree.Element:
+    paragraph = ElementTree.Element(_qn("w:p"))
+    p_pr = ElementTree.SubElement(paragraph, _qn("w:pPr"))
+    sect_pr = ElementTree.SubElement(p_pr, _qn("w:sectPr"))
+    section_rules = dict(rules)
+    section_rules["columns"] = columns
+    _apply_section_layout(sect_pr, section_rules)
+    section_type = _ensure_child(sect_pr, "w:type")
+    section_type.set(_qn("w:val"), "continuous")
+    return paragraph
 
 
 def _style_paragraphs(root: ElementTree.Element, rules: Dict) -> None:
@@ -449,7 +541,11 @@ def _conversion_warnings(text: str, sections: List[Dict], structure: Dict, rules
     if structure["figure_count"]:
         warnings.append(f"Detected and preserved {structure['figure_count']} figure/media item(s); verify captions and image placement after download.")
     if rules["columns"] == 2:
-        warnings.append("Applied two-column IEEE-style layout; verify this is appropriate for the selected submission stage.")
+        warnings.append("Applied IEEE-style layout: title/front matter is single-column and the main manuscript body is two-column.")
+    if structure.get("full_width_table_count"):
+        warnings.append(f"Placed {structure['full_width_table_count']} table(s) in full-width single-column sections for readability.")
+    if structure.get("full_width_figure_count"):
+        warnings.append(f"Placed {structure['full_width_figure_count']} figure(s) in full-width single-column sections for readability.")
     return warnings or ["No major structural warnings detected by the local formatter."]
 
 

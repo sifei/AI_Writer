@@ -127,7 +127,9 @@ Discussion: {long_discussion}
         document_xml = _read_document_xml(base64.b64decode(result["convertedDocxBase64"]))
 
         self.assertEqual(result["layoutMode"], "IEEE two-column technical layout")
+        self.assertIn('w:num="1"', document_xml)
         self.assertIn('w:num="2"', document_xml)
+        self.assertTrue(any("title/front matter is single-column" in warning for warning in result["warnings"]))
 
     def test_ieee_access_applies_two_columns_to_all_sections(self):
         encoded = base64.b64encode(_docx_with_multiple_sections()).decode("ascii")
@@ -143,7 +145,39 @@ Discussion: {long_discussion}
 
         self.assertEqual(result["layoutMode"], "IEEE two-column technical layout")
         self.assertGreaterEqual(document_xml.count('w:num="2"'), 2)
-        self.assertNotIn('w:num="1"', document_xml)
+        self.assertEqual(document_xml.count('w:num="1"'), 1)
+
+    def test_ieee_access_places_tables_in_full_width_sections(self):
+        encoded = base64.b64encode(_docx_with_table()).decode("ascii")
+
+        result = convert_docx_to_journal_format(
+            {
+                "journal": "IEEE Access",
+                "fileName": "wide-table-ieee.docx",
+                "docxBase64": encoded,
+            }
+        )
+        document_xml = _read_document_xml(base64.b64decode(result["convertedDocxBase64"]))
+
+        self.assertGreaterEqual(document_xml.count('w:num="1"'), 2)
+        self.assertGreaterEqual(document_xml.count('w:num="2"'), 2)
+        self.assertTrue(any("table(s) in full-width" in warning for warning in result["warnings"]))
+
+    def test_ieee_access_resizes_figures_and_places_them_full_width(self):
+        encoded = base64.b64encode(_docx_with_drawing()).decode("ascii")
+
+        result = convert_docx_to_journal_format(
+            {
+                "journal": "IEEE Access",
+                "fileName": "wide-figure-ieee.docx",
+                "docxBase64": encoded,
+            }
+        )
+        document_xml = _read_document_xml(base64.b64decode(result["convertedDocxBase64"]))
+
+        self.assertIn('cx="6858000"', document_xml)
+        self.assertGreaterEqual(document_xml.count('w:num="1"'), 2)
+        self.assertTrue(any("figure(s) in full-width" in warning for warning in result["warnings"]))
 
     def test_plos_one_remains_single_column(self):
         encoded = base64.b64encode(_build_docx(TEXT)).decode("ascii")
@@ -202,6 +236,32 @@ def _docx_with_media() -> bytes:
     entries["word/media/image1.png"] = base64.b64decode(
         "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
     )
+    return _zip_entries(entries)
+
+
+def _docx_with_drawing() -> bytes:
+    with zipfile.ZipFile(io.BytesIO(_build_docx(TEXT))) as source:
+        entries = {name: source.read(name) for name in source.namelist()}
+
+    document_xml = entries["word/document.xml"].decode("utf-8")
+    document_xml = document_xml.replace(
+        "<w:document ",
+        '<w:document xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" ',
+        1,
+    )
+    figure_xml = """
+<w:p>
+  <w:r>
+    <w:drawing>
+      <wp:inline>
+        <wp:extent cx="9000000" cy="4500000"/>
+      </wp:inline>
+    </w:drawing>
+  </w:r>
+</w:p>
+"""
+    document_xml = document_xml.replace("<w:sectPr>", f"{figure_xml}<w:sectPr>", 1)
+    entries["word/document.xml"] = document_xml.encode("utf-8")
     return _zip_entries(entries)
 
 
