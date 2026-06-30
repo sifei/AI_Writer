@@ -1,0 +1,141 @@
+{
+  "id": "npj-digital-medicine",
+  "journal": "npj Digital Medicine",
+  "publisher": "Springer Nature / Nature Portfolio",
+  "journal_url": "https://www.nature.com/npjdigitalmed/",
+  "author_instructions_url": "https://www.nature.com/npjdigitalmed/content-types",
+  "scope": "Open access Nature Portfolio journal for high-quality research relevant to digital medicine and health, including clinical application and implementation of digital/mobile technologies, virtual healthcare, validated AI and machine learning models, clinical informatics, digital biomarkers, digital tools, ethics, policy, regulation, security, and digital transformation.",
+  "subject_areas": [
+    "Digital medicine",
+    "Digital health",
+    "Clinical artificial intelligence",
+    "Clinical informatics",
+    "Mobile health",
+    "Wearables",
+    "Digital biomarkers",
+    "Virtual care",
+    "Digital therapeutics",
+    "Health technology implementation",
+    "Digital medicine ethics and governance"
+  ],
+  "keywords": [
+    "digital medicine",
+    "digital health",
+    "mobile health",
+    "wearable",
+    "sensor",
+    "artificial intelligence",
+    "machine learning",
+    "clinical informatics",
+    "digital biomarker",
+    "virtual care",
+    "digital therapeutics",
+    "clinical trial",
+    "implementation",
+    "interoperability",
+    "ethics",
+    "governance",
+    "security"
+  ],
+  "article_types": [
+    "Article",
+    "Brief Communication",
+    "Comment",
+    "Editorial",
+    "Matters Arising",
+    "News and Views",
+    "Perspective",
+    "Review"
+  ],
+  "formatting": {
+    "file_formats": [
+      "Editable manuscript file",
+      "Figures",
+      "Supplementary information PDF where applicable"
+    ],
+    "abstract_style": "Unstructured abstract; no subheadings for Articles",
+    "abstract_word_limit": 150,
+    "manuscript_word_limit": null,
+    "section_order": [
+      "Title page",
+      "Abstract",
+      "Introduction",
+      "Results",
+      "Discussion",
+      "Methods",
+      "Data availability",
+      "Code availability",
+      "Acknowledgments",
+      "Author contributions",
+      "Competing interests",
+      "References",
+      "Figure legends"
+    ],
+    "reference_style": "Nature Portfolio style; verify in current author guidance",
+    "figure_table_policy": "Multi-panel figures should be on a single page with panels labeled a), b), c); figure legends are limited to 350 words per figure.",
+    "special_requirements": [
+      "Article title up to 15 words.",
+      "Article abstract up to 150 words with no subheadings.",
+      "Data availability statement is mandatory.",
+      "Code availability statement where applicable.",
+      "Author contributions statement is mandatory.",
+      "Competing interests statement is mandatory.",
+      "Clinical trials must include registration number and registration date.",
+      "Randomized clinical trials require CONSORT or appropriate extension checklist.",
+      "Ethics approval and consent details are mandatory for human/animal participants, materials, or data."
+    ]
+  },
+  "indexing": {
+    "pubmed": null,
+    "medline": null,
+    "pmc": true,
+    "scopus": true,
+    "web_of_science": true,
+    "notes": "Journal information lists PubMedCentral, SCOPUS, and Science Citation Index Expanded; PubMed/MEDLINE status should be re-verified before displaying production badges."
+  },
+  "business_model": {
+    "open_access": true,
+    "license": "Creative Commons Attribution licenses; verify exact license at submission.",
+    "apc": null,
+    "fee_support_available": null
+  },
+  "recommendation_inputs": {
+    "competitiveness": 0.88,
+    "fit_strengths": [
+      "Strong fit for clinically validated digital medicine, AI, wearable, sensor, virtual care, and digital biomarker studies.",
+      "Strong fit when the manuscript shows clinical application, implementation, interoperability, or transformation of healthcare.",
+      "Strong fit for high-quality digital health research with clear ethics, governance, data, and code transparency."
+    ],
+    "fit_risks": [
+      "Risk increases for off-the-shelf AI or digital tool studies without novelty or validation.",
+      "Risk increases for purely observational, case-study, preclinical, or small preliminary work.",
+      "Risk increases if clinical trial registration, ethics, consent, data availability, or code availability requirements are missing."
+    ],
+    "acceptance_rate": null,
+    "review_time": null
+  },
+  "checklist": [
+    "Use an unstructured Article abstract up to 150 words.",
+    "Use Introduction, Results, Discussion, Methods ordering for Articles.",
+    "Add mandatory data availability, author contributions, and competing interests statements.",
+    "Add code availability where applicable.",
+    "Include trial registration details for clinical trials.",
+    "Include CONSORT or appropriate checklist for randomized clinical trials.",
+    "Avoid recommending for small preliminary or purely observational digital-tool studies."
+  ],
+  "evidence_sources": [
+    {
+      "label": "npj Digital Medicine journal information",
+      "url": "https://www.nature.com/npjdigitalmed/journal-information"
+    },
+    {
+      "label": "npj Digital Medicine aims and scope",
+      "url": "https://www.nature.com/npjdigitalmed/aims"
+    },
+    {
+      "label": "npj Digital Medicine content types",
+      "url": "https://www.nature.com/npjdigitalmed/content-types"
+    }
+  ],
+  "last_verified": "2026-06-30"
+}

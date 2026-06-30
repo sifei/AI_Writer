@@ -1,0 +1,127 @@
+{
+  "id": "ieee-access",
+  "journal": "IEEE Access",
+  "publisher": "IEEE",
+  "journal_url": "https://ieeeaccess.ieee.org/",
+  "author_instructions_url": "https://ieeeaccess.ieee.org/authors/submission-guidelines/",
+  "scope": "Multidisciplinary, online-only, fully open access IEEE journal for original research or development in science and technology across IEEE fields of interest. Biomedical manuscripts fit best when the contribution is technical, engineering, computational, AI, signal processing, devices, sensors, informatics infrastructure, or applied technology.",
+  "subject_areas": [
+    "Computational and artificial intelligence",
+    "Computers and information processing",
+    "Communications technology",
+    "Signal processing",
+    "Power engineering and energy",
+    "Biomedical engineering",
+    "Sensors",
+    "Digital health technology",
+    "Medical devices",
+    "Health data systems"
+  ],
+  "keywords": [
+    "artificial intelligence",
+    "machine learning",
+    "deep learning",
+    "signal processing",
+    "sensor",
+    "wearable",
+    "medical device",
+    "biomedical engineering",
+    "digital health",
+    "telemedicine",
+    "internet of things",
+    "computer vision",
+    "information processing",
+    "engineering",
+    "technology"
+  ],
+  "article_types": [
+    "Original research article",
+    "Review article",
+    "Survey article",
+    "Special section article"
+  ],
+  "formatting": {
+    "file_formats": [
+      "IEEE article templates",
+      "DOC",
+      "DOCX",
+      "LaTeX"
+    ],
+    "abstract_style": "IEEE-style abstract; verify final requirements in current IEEE Access author guidance",
+    "abstract_word_limit": null,
+    "manuscript_word_limit": null,
+    "section_order": [
+      "Title",
+      "Abstract",
+      "Index Terms",
+      "Introduction",
+      "Methods or System Model",
+      "Results",
+      "Discussion",
+      "Conclusion",
+      "Acknowledgment",
+      "References"
+    ],
+    "reference_style": "IEEE reference style",
+    "figure_table_policy": "Use IEEE figure/table conventions and verify upload requirements in IEEE Access submission guidelines.",
+    "special_requirements": [
+      "Use IEEE author templates where possible.",
+      "Emphasize applied technical contribution.",
+      "Include index terms.",
+      "Clearly describe reproducibility, datasets, code, or hardware where applicable.",
+      "Check special section fit when submitting to a focused call."
+    ]
+  },
+  "indexing": {
+    "pubmed": false,
+    "medline": false,
+    "pmc": null,
+    "scopus": true,
+    "web_of_science": true,
+    "notes": "IEEE Access is indexed in major engineering and technology indexes; biomedical indexing should be checked for each author need."
+  },
+  "business_model": {
+    "open_access": true,
+    "license": null,
+    "apc": null,
+    "fee_support_available": null
+  },
+  "recommendation_inputs": {
+    "competitiveness": 0.48,
+    "fit_strengths": [
+      "Good fit for engineering, AI, signal processing, sensors, devices, and technology-focused biomedical manuscripts.",
+      "Good fit for applied interdisciplinary work across IEEE fields.",
+      "Good fit when rapid open access publication and a technical audience are important."
+    ],
+    "fit_risks": [
+      "Not ideal for manuscripts needing PubMed/MEDLINE as a primary indexing requirement.",
+      "Risk increases if the manuscript is mainly clinical without a technical engineering contribution.",
+      "Risk increases if validation, reproducibility, datasets, or technical novelty are weak."
+    ],
+    "acceptance_rate": null,
+    "review_time": "IEEE Access states a 4 to 6 week submission-to-publication time on its journal site; verify current status before displaying."
+  },
+  "checklist": [
+    "Frame the manuscript around the technical or engineering contribution.",
+    "Use IEEE article structure and reference style.",
+    "Add index terms after the abstract.",
+    "Clarify datasets, code, hardware, or reproducibility details.",
+    "Check whether a current IEEE Access special section is a better target.",
+    "Do not recommend when PubMed/MEDLINE indexing is mandatory."
+  ],
+  "evidence_sources": [
+    {
+      "label": "IEEE Access journal information",
+      "url": "https://ieeeaccess.ieee.org/"
+    },
+    {
+      "label": "IEEE Access submission guidelines",
+      "url": "https://ieeeaccess.ieee.org/authors/submission-guidelines/"
+    },
+    {
+      "label": "IEEE Access APC information",
+      "url": "https://ieeeaccess.ieee.org/about/article-processing-charges/"
+    }
+  ],
+  "last_verified": "2026-06-30"
+}

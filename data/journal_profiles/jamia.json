@@ -1,0 +1,128 @@
+{
+  "id": "jamia",
+  "journal": "Journal of the American Medical Informatics Association",
+  "publisher": "Oxford University Press for the American Medical Informatics Association",
+  "journal_url": "https://academic.oup.com/jamia",
+  "author_instructions_url": "https://academic.oup.com/jamia/pages/General_Instructions",
+  "scope": "AMIA's biomedical and health informatics journal covering clinical care, clinical research, translational science, implementation science, imaging, education, consumer health, public health, and policy. Strong submissions describe innovative informatics research or systems that advance biomedical science or promote health.",
+  "subject_areas": [
+    "Biomedical informatics",
+    "Health informatics",
+    "Clinical care informatics",
+    "Clinical research informatics",
+    "Translational bioinformatics",
+    "Implementation science",
+    "Consumer health informatics",
+    "Public health informatics",
+    "Imaging informatics",
+    "Informatics policy"
+  ],
+  "keywords": [
+    "biomedical informatics",
+    "health informatics",
+    "clinical care",
+    "clinical research",
+    "translational bioinformatics",
+    "implementation science",
+    "consumer health",
+    "public health",
+    "imaging",
+    "policy",
+    "informatics system",
+    "evaluation",
+    "electronic health records",
+    "decision support"
+  ],
+  "article_types": [
+    "Research and Applications",
+    "Review",
+    "Brief Communication",
+    "Case Report",
+    "Perspective",
+    "Correspondence",
+    "Editorial",
+    "Highlight"
+  ],
+  "formatting": {
+    "file_formats": [
+      "Word document",
+      "Compiled PDF for LaTeX source"
+    ],
+    "abstract_style": "Structured abstract for Research and Applications: Objective, Materials and Methods, Results, Discussion, Conclusion",
+    "abstract_word_limit": 250,
+    "manuscript_word_limit": 4000,
+    "section_order": [
+      "Title page",
+      "Abstract",
+      "Background and Significance",
+      "Objective",
+      "Materials and Methods",
+      "Results",
+      "Discussion",
+      "Conclusion",
+      "Acknowledgments",
+      "Competing Interests",
+      "Funding",
+      "References"
+    ],
+    "reference_style": "Verify in Oxford/JAMIA author instructions",
+    "figure_table_policy": "For Research and Applications: up to 4 tables and up to 6 figures; images uploaded separately with legends and alt text.",
+    "special_requirements": [
+      "Double-spaced manuscript.",
+      "Title page with corresponding author details, author affiliations, up to five keywords, and word count.",
+      "Disclose conflicts of interest.",
+      "Disclose AI tool use where applicable.",
+      "Use CRediT contributor roles.",
+      "Provide figure alt text.",
+      "Submit related published materials where overlap assessment is needed."
+    ]
+  },
+  "indexing": {
+    "pubmed": true,
+    "medline": true,
+    "pmc": null,
+    "scopus": true,
+    "web_of_science": true,
+    "notes": "Indexing should be re-verified through NLM Catalog, Scopus, and Web of Science before displaying production badges."
+  },
+  "business_model": {
+    "open_access": null,
+    "license": null,
+    "apc": null,
+    "fee_support_available": null
+  },
+  "recommendation_inputs": {
+    "competitiveness": 0.8,
+    "fit_strengths": [
+      "Strong fit for biomedical and health informatics work with clear innovation and evaluation.",
+      "Strong fit for clinical care, clinical research, translational bioinformatics, implementation science, public health, and policy manuscripts.",
+      "Strong fit when the manuscript has implications for biomedical science, health systems, or health outcomes."
+    ],
+    "fit_risks": [
+      "Risk increases if the manuscript is not clearly informatics-centered.",
+      "Risk increases if evaluation is weak or the system innovation is unclear.",
+      "Risk increases if word count, structured abstract, figure/table limits, or disclosure requirements are not met."
+    ],
+    "acceptance_rate": null,
+    "review_time": null
+  },
+  "checklist": [
+    "Use JAMIA structured abstract headings for Research and Applications.",
+    "Keep Research and Applications manuscripts up to 4000 words and abstract up to 250 words.",
+    "Include Background and Significance in the main text.",
+    "Use no more than 4 tables and 6 figures for Research and Applications.",
+    "Add conflicts, funding, CRediT roles, and AI-use disclosure where applicable.",
+    "Add figure alt text."
+  ],
+  "evidence_sources": [
+    {
+      "label": "JAMIA author instructions",
+      "url": "https://academic.oup.com/jamia/pages/General_Instructions"
+    },
+    {
+      "label": "JAMIA journal home",
+      "url": "https://academic.oup.com/jamia"
+    }
+  ],
+  "last_verified": "2026-06-30"
+}

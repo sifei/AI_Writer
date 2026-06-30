@@ -1,6 +1,8 @@
+import json
 import math
 import re
 from collections import Counter
+from pathlib import Path
 from typing import Dict, Iterable, List, Tuple
 
 
@@ -39,7 +41,7 @@ SECTION_NAMES = [
     "references",
 ]
 
-JOURNAL_PROFILES = [
+BUILT_IN_JOURNAL_PROFILES = [
     {
         "journal": "BMC Medicine",
         "scope": "Broad translational and clinical medicine with open-access publication model.",
@@ -122,6 +124,18 @@ JOURNAL_PROFILES = [
     },
 ]
 
+
+def get_journal_profiles() -> List[Dict]:
+    profiles_by_name = {profile["journal"]: profile for profile in BUILT_IN_JOURNAL_PROFILES}
+    profiles_dir = Path(__file__).resolve().parents[2] / "data" / "journal_profiles"
+
+    if profiles_dir.exists():
+        for path in sorted(profiles_dir.glob("*.json")):
+            with path.open(encoding="utf-8") as profile_file:
+                profile = _profile_from_json(json.load(profile_file))
+            profiles_by_name[profile["journal"]] = profile
+
+    return list(profiles_by_name.values())
 
 def analyze_submission(payload: Dict) -> Dict:
     narrative = payload.get("narrative", "").strip()
@@ -345,7 +359,7 @@ def _recommend_journals(
 
     for profile in JOURNAL_PROFILES:
         overlap = len(keyword_set.intersection(profile["keywords"]))
-        topic_score = overlap / max(4, len(profile["keywords"]))
+        topic_score = min(1.0, overlap / max(4, min(8, len(profile["keywords"]))))
         method_bonus = 0.08 if re.search(r"(?i)cohort|trial|prospective|validation|model", text) else 0
         article_bonus = 0.06 if article_type in {"Original Research", "Clinical Trial"} else 0.01
         completeness_factor = completeness / 100
@@ -376,6 +390,29 @@ def _recommend_journals(
         key=lambda item: item["estimatedFitAndAcceptanceLikelihood"],
         reverse=True,
     )[:3]
+
+
+def _profile_from_json(profile: Dict) -> Dict:
+    recommendation_inputs = profile.get("recommendation_inputs", {})
+    return {
+        "journal": profile["journal"],
+        "scope": profile["scope"],
+        "keywords": _profile_keyword_terms(profile.get("keywords", []), profile.get("subject_areas", [])),
+        "article_types": set(profile.get("article_types", [])),
+        "competitiveness": recommendation_inputs.get("competitiveness", 0.65),
+        "checklist": profile.get("checklist", []),
+        "source_profile_id": profile.get("id"),
+        "evidence_sources": profile.get("evidence_sources", []),
+    }
+
+
+def _profile_keyword_terms(*keyword_groups: List[str]) -> set:
+    terms = set()
+    for group in keyword_groups:
+        for phrase in group:
+            terms.add(phrase.lower())
+            terms.update(token for token in _tokens(phrase) if token not in STOPWORDS)
+    return terms
 
 
 def _raised_factors(overlap: int, completeness: int, article_type: str) -> List[str]:
@@ -452,3 +489,6 @@ def _trim_sentence(text: str, limit: int) -> str:
         return normalized
     trimmed = normalized[:limit].rsplit(" ", 1)[0]
     return f"{trimmed}..."
+
+
+JOURNAL_PROFILES = get_journal_profiles()

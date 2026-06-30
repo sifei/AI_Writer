@@ -1,0 +1,124 @@
+{
+  "id": "journal-of-biomedical-informatics",
+  "journal": "Journal of Biomedical Informatics",
+  "publisher": "Elsevier",
+  "journal_url": "https://www.sciencedirect.com/journal/journal-of-biomedical-informatics",
+  "author_instructions_url": "https://www.sciencedirect.com/journal/journal-of-biomedical-informatics/publish/guide-for-authors",
+  "scope": "Methodology journal for biomedical informatics research. Strong submissions should address a real biomedical or clinical problem, introduce a novel informatics method or technique, compare against the current state of the art, and show generalizable lessons or clinical translation potential.",
+  "subject_areas": [
+    "Biomedical informatics",
+    "Clinical informatics",
+    "Translational bioinformatics",
+    "Clinical decision support",
+    "Natural language processing",
+    "Artificial intelligence",
+    "Machine learning",
+    "Knowledge representation",
+    "Clinical research informatics",
+    "Privacy and security"
+  ],
+  "keywords": [
+    "biomedical informatics",
+    "clinical informatics",
+    "translational bioinformatics",
+    "clinical decision support",
+    "natural language processing",
+    "artificial intelligence",
+    "machine learning",
+    "knowledge representation",
+    "clinical research informatics",
+    "privacy",
+    "security",
+    "methodology",
+    "state of the art",
+    "clinical translation"
+  ],
+  "article_types": [
+    "Original Research",
+    "Methodological Review",
+    "Commentary",
+    "Special Communication",
+    "Letter to the Editor",
+    "Book Review",
+    "Editorial"
+  ],
+  "formatting": {
+    "file_formats": [
+      "DOC",
+      "DOCX",
+      "LaTeX where supported by Elsevier submission system"
+    ],
+    "abstract_style": "Verify in Elsevier guide for authors",
+    "abstract_word_limit": null,
+    "manuscript_word_limit": null,
+    "section_order": [
+      "Title page",
+      "Abstract",
+      "Keywords",
+      "Introduction",
+      "Methods",
+      "Results",
+      "Discussion",
+      "Conclusions",
+      "Declarations",
+      "References"
+    ],
+    "reference_style": "Verify in Elsevier guide for authors",
+    "figure_table_policy": "Verify exact figure and table requirements in the current Elsevier guide for authors.",
+    "special_requirements": [
+      "Show a novel informatics methodology or technique.",
+      "Compare against current state-of-the-art methods where applicable.",
+      "Ground the method in a real biomedical or clinical problem.",
+      "Explain generalizability and clinical translation potential.",
+      "Include healthcare professional motivation or evaluation context where appropriate."
+    ]
+  },
+  "indexing": {
+    "pubmed": true,
+    "medline": true,
+    "pmc": null,
+    "scopus": true,
+    "web_of_science": true,
+    "notes": "Indexing should be re-verified through NLM Catalog, Scopus, and Web of Science before displaying production badges."
+  },
+  "business_model": {
+    "open_access": null,
+    "license": null,
+    "apc": null,
+    "fee_support_available": null
+  },
+  "recommendation_inputs": {
+    "competitiveness": 0.72,
+    "fit_strengths": [
+      "Strong fit for novel biomedical informatics methods with clinical or translational grounding.",
+      "Strong fit for NLP, AI, machine learning, knowledge representation, decision support, and clinical research informatics methods.",
+      "Strong fit when the manuscript evaluates against state-of-the-art methods and explains generalizability."
+    ],
+    "fit_risks": [
+      "Risk increases if the manuscript is mainly an applied biomedical result without a novel informatics method.",
+      "Risk increases for marginal machine learning improvements without sound evaluation or clinical translation analysis.",
+      "Risk increases for signal processing, imaging, medical device, or communication-network work without a clear knowledge/information management contribution."
+    ],
+    "acceptance_rate": null,
+    "review_time": null
+  },
+  "checklist": [
+    "Frame the manuscript around a novel biomedical informatics method or technique.",
+    "State the real biomedical or clinical problem motivating the work.",
+    "Compare the method with current state-of-the-art approaches.",
+    "Explain generalizability beyond one local dataset or health system.",
+    "Discuss likely practical usefulness in biomedical or clinical settings.",
+    "Verify final formatting in the Elsevier guide for authors."
+  ],
+  "evidence_sources": [
+    {
+      "label": "Journal of Biomedical Informatics aims and scope",
+      "url": "https://www.sciencedirect.com/journal/journal-of-biomedical-informatics/about/aims-and-scope"
+    },
+    {
+      "label": "Journal of Biomedical Informatics guide for authors",
+      "url": "https://www.sciencedirect.com/journal/journal-of-biomedical-informatics/publish/guide-for-authors"
+    }
+  ],
+  "last_verified": "2026-06-30"
+}
